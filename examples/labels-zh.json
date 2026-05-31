@@ -1,0 +1,46 @@
+{
+  "$comment": "简历结构化 JSON 字段路径 → 中文展示标签。供 Dify 展示节点、外部 API 渲染与文档引用。",
+  "sections": {
+    "basic": "基本信息",
+    "education": "教育背景",
+    "work_experience": "工作/项目经历",
+    "projects": "项目经历",
+    "skills": "技能特长",
+    "summary": "职业摘要"
+  },
+  "fields": {
+    "basic.name": "姓名",
+    "basic.phone": "联系电话",
+    "basic.email": "电子邮箱",
+    "basic.city": "所在城市",
+    "basic.years_of_experience": "工作年限（年）",
+    "basic._email_invalid": "邮箱格式异常",
+
+    "education.school": "学校",
+    "education.major": "专业",
+    "education.degree": "学历",
+    "education.start_date": "入学时间",
+    "education.end_date": "毕业时间",
+
+    "work_experience.company": "公司/项目",
+    "work_experience.title": "职位",
+    "work_experience.start_date": "开始时间",
+    "work_experience.end_date": "结束时间",
+    "work_experience.description": "职责描述",
+
+    "projects.name": "项目名称",
+    "projects.role": "担任角色",
+    "projects.start_date": "开始时间",
+    "projects.end_date": "结束时间",
+    "projects.description": "项目描述",
+    "projects.tech_stack": "技术栈",
+
+    "skills": "技能",
+    "summary": "职业摘要"
+  },
+  "array_item_labels": {
+    "education": "教育经历",
+    "work_experience": "经历",
+    "projects": "项目"
+  }
+}

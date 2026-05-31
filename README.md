@@ -18,7 +18,8 @@ flowchart LR
     A[开始节点<br/>上传 PDF/DOCX/TXT] --> B[文档提取器<br/>纯文本]
     B --> C[LLM 节点<br/>结构化 JSON]
     C --> D[代码节点<br/>JSON 校验/补全]
-    D --> E[结束 / 变量输出]
+    D --> G[展示代码节点<br/>中文 Markdown]
+    G --> E[结束 / 变量输出]
     E --> F[发布为 API<br/>或 Web App]
 ```
 
@@ -28,6 +29,7 @@ flowchart LR
 | 文档提取器 | 将二进制文档转为纯文本 | 复杂版式可能丢表格，需在提示词中说明 |
 | LLM | 按 schema 输出 JSON | 温度宜低（0~0.3），开启 JSON 模式（若模型支持） |
 | 代码 | `json.loads`、必填字段检查 | 失败时返回明确错误信息，便于重试 |
+| 展示代码 | 英文 JSON → 中文 Markdown | 见 [`docs/display-chinese-labels.md`](docs/display-chinese-labels.md) |
 | 发布 | API Key、速率限制 | 密钥仅存环境变量，勿写入仓库 |
 
 ## 快速开始
@@ -75,6 +77,8 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 
 完整字段定义见 [`examples/schema-resume.json`](examples/schema-resume.json)。
 
+面向最终用户的中文展示（非 snake_case 键名）见 [`docs/display-chinese-labels.md`](docs/display-chinese-labels.md)，标签映射见 [`examples/labels-zh.json`](examples/labels-zh.json)。
+
 ## 注意事项
 
 ### 隐私与合规
@@ -107,10 +111,13 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 │   ├── dify-llm-setup-plan-a.md
 │   ├── troubleshooting-empty-output.md
 │   ├── code-node-resume.py
+│   ├── code-node-display-zh.py
+│   ├── display-chinese-labels.md
 │   ├── prompt-system.txt
 │   └── prompt-user-template.txt
 ├── examples/
 │   ├── schema-resume.json
+│   ├── labels-zh.json
 │   └── output-sample.json
 └── .gitignore
 ```
