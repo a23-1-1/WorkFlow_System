@@ -2,8 +2,16 @@
 Dify 云端 Python3 代码节点 — 简历 JSON 解析与规范化
 
 用法：将本文件全文复制到 Dify 工作流「代码」节点（语言选 Python 3）。
-输入变量名：llm_output（绑定上一 LLM 节点的 text 输出）
+
+输入变量名（必须与 main() 参数名完全一致）：
+  llm_raw_output — 绑定上一 LLM 节点的结构化 JSON 输出，或 text 输出
+
 输出变量名：valid、result、error
+
+说明：
+  - Dify 会把每个「输入变量名」作为 keyword 传给 main()；未在 main() 中声明的参数会触发
+    TypeError: main() got an unexpected keyword argument 'arg2'。请删除未使用的 arg2 等变量。
+  - 若 LLM 开启结构化输出，绑定 JSON/object 变量；若为纯文本，绑定 text 即可。
 """
 
 import json
@@ -11,6 +19,9 @@ import re
 
 # 简单邮箱正则（过滤明显错误，不保证 RFC 5322 完整合规）
 _EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+# LLM 偶发多包一层时的常见键名（仅当顶层只有单一键且值为 dict 时解包一次）
+_WRAPPER_KEYS = ("llm_raw_output", "llm_output", "output", "data", "result", "text")
 
 
 def _strip_markdown_fence(text):
@@ -78,6 +89,20 @@ def _dedupe_skills(skills):
     return out
 
 
+def _unwrap_single_key_wrapper(data):
+    """
+    若 LLM 或上游节点多包一层（如 {"llm_raw_output": {"basic": ...}}），解包一次。
+    若已是标准简历结构（含 basic 等字段），保持不变。
+    """
+    if not isinstance(data, dict) or len(data) != 1:
+        return data
+    key = next(iter(data))
+    inner = data[key]
+    if key in _WRAPPER_KEYS and isinstance(inner, dict):
+        return inner
+    return data
+
+
 def _normalize_resume(data):
     """顶层与子字段 setdefault，并做邮箱/手机/skills 规范化。"""
     data.setdefault("basic", {})
@@ -115,32 +140,56 @@ def _normalize_resume(data):
     return data
 
 
-def main(llm_output: str) -> dict:
-    text = _strip_markdown_fence(llm_output)
+def _resolve_raw_input(llm_raw_output=None, **kwargs):
+    """优先 llm_raw_output；否则尝试 kwargs 中的常见别名（兼容旧配置）。"""
+    if llm_raw_output is not None:
+        return llm_raw_output
+    for key in ("text", "llm_output", "llm_text", "output"):
+        if key in kwargs and kwargs[key] is not None:
+            return kwargs[key]
+    return None
 
-    if not text:
+
+def _parse_to_dict(raw):
+    """将 str 或 dict 转为简历 dict；失败时返回 (None, error_msg)。"""
+    if isinstance(raw, dict):
+        return _unwrap_single_key_wrapper(raw), None
+
+    if isinstance(raw, str):
+        text = _strip_markdown_fence(raw)
+        if not text:
+            return None, "LLM 输出为空，无法解析 JSON"
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError as e:
+            return None, "JSON 解析失败: {0}".format(e)
+        if not isinstance(data, dict):
+            return None, "JSON 根节点必须为 object"
+        return _unwrap_single_key_wrapper(data), None
+
+    return None, "不支持的输入类型: {0}，请绑定 LLM 的 text 或结构化 JSON".format(
+        type(raw).__name__
+    )
+
+
+def main(llm_raw_output=None, **kwargs) -> dict:
+    """
+    Dify 入口：输入变量名必须与参数名一致（推荐仅配置 llm_raw_output）。
+    **kwargs 用于忽略界面残留的多余变量（如 arg2），避免 TypeError。
+    """
+    raw = _resolve_raw_input(llm_raw_output, **kwargs)
+    if raw is None:
         return {
             "valid": False,
             "result": "",
-            "error": "LLM 输出为空，无法解析 JSON",
+            "error": "未收到 LLM 输出（请检查输入变量名是否为 llm_raw_output，并绑定 LLM 输出）",
         }
 
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError as e:
-        return {
-            "valid": False,
-            "result": "",
-            "error": "JSON 解析失败: {0}".format(e),
-        }
+    data, err = _parse_to_dict(raw)
+    if err:
+        return {"valid": False, "result": "", "error": err}
 
-    if not isinstance(data, dict):
-        return {
-            "valid": False,
-            "result": "",
-            "error": "JSON 根节点必须为 object",
-        }
-
+    # 若 LLM 只返回 {"basic": {...}}，_normalize_resume 会补全 education/work_experience 等顶层字段
     data = _normalize_resume(data)
 
     return {

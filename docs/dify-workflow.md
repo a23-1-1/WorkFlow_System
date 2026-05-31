@@ -75,8 +75,8 @@
 
 ### 输出
 
-- 将 LLM 的 **文本输出** 映射为变量 `llm_raw_output`。
-- 不要在提示词中要求返回 Markdown 代码块；若模型仍返回 \`\`\`json，在下一步代码节点中剥离。
+- **推荐**：若 LLM 节点已开启 **结构化输出 / JSON Schema**，将结构化结果映射为变量（如 `structured_output` 或节点自带的 JSON 字段），在代码节点中绑定为 `llm_raw_output`（见第五节）。
+- **备选**：若仅使用文本输出，将 LLM 的 **text** 映射并在代码节点绑定为 `llm_raw_output`；不要在提示词中要求返回 Markdown 代码块。若模型仍返回 \`\`\`json，代码节点会自动剥离。
 
 ---
 
@@ -84,7 +84,7 @@
 
 ### 目的
 
-- 剥离 LLM 可能返回的 Markdown 代码块，用 `json.loads` 解析
+- 支持 `llm_raw_output` 为 **dict/object**（结构化输出，直接使用）或 **str**（剥离 Markdown 围栏后 `json.loads`）
 - 对顶层与子字段做 `setdefault` 补全，`skills` 去重
 - 邮箱简单正则校验（无效时保留原文并标记 `basic._email_invalid`）
 - 手机号归一化（去非数字、大陆 11 位取后 11 位；国际号/座机见代码注释局限）
@@ -93,12 +93,37 @@
 
 将仓库内 [`code-node-resume.py`](code-node-resume.py) **全文复制**到 Dify 代码节点，勿遗漏 `import` 与 `main` 函数。
 
+### 输入变量名必须与 `main()` 参数名一致（重要）
+
+Dify 会把代码节点「输入变量」列表里的 **每一个变量名** 作为 **keyword 参数** 传给 `main()`。例如界面配置了 `llm_raw_output` 和 `arg2`，运行时等价于：
+
+```python
+main(llm_raw_output=..., arg2=...)
+```
+
+若 `main()` 未声明 `arg2`，会报错：
+
+```text
+TypeError: main() got an unexpected keyword argument 'arg2'
+```
+
+**推荐做法：**
+
+| 项 | 说明 |
+|----|------|
+| 只保留一个输入变量 | 变量名 **`llm_raw_output`**，与 `main(llm_raw_output=None, **kwargs)` 一致 |
+| 删除未使用变量 | 删除 **`arg2`** 及任何未在 `main()` 中声明的占位变量 |
+| 结构化输出 | 绑定 LLM 的 **JSON / object** 字段，**不要**再绑 text |
+| 纯文本输出 | 绑定 LLM 的 **text** 到 `llm_raw_output` |
+
+当前代码使用 `**kwargs` 吸收多余入参，避免偶发残留变量导致崩溃，但 **仍应在 Dify 界面删除 `arg2`**，以免传入无意义数据。
+
 ### 在 Dify 中配置
 
 | 项 | 说明 |
 |----|------|
 | 节点类型 | **代码**，语言选 **Python 3**（云端） |
-| 输入变量 `llm_output` | 绑定上一 **LLM** 节点的 **text** 输出（即模型原始文本） |
+| 输入变量 `llm_raw_output` | 绑定上一 **LLM** 节点的 **结构化 JSON 输出**（优先）或 **text** |
 | 输出变量 `valid` | 布尔：`true` 表示 JSON 解析与规范化成功 |
 | 输出变量 `result` | 字符串：规范化后的 JSON（`ensure_ascii=False`，中文不转义） |
 | 输出变量 `error` | 字符串：失败原因；成功时为空字符串 |
@@ -106,9 +131,25 @@
 配置步骤：
 
 1. 从节点面板拖入 **代码** 节点，接在 LLM 节点之后。
-2. 在「输入变量」新增 `llm_output`，值选 `LLM.text`（或你命名的 LLM 节点下的 text 字段）。
-3. 在「输出变量」声明 `valid`（布尔）、`result`（字符串）、`error`（字符串）。
-4. 将 [`code-node-resume.py`](code-node-resume.py) 全部粘贴到代码编辑区并保存。
+2. 在「输入变量」**仅**新增 `llm_raw_output`：
+   - LLM 已开结构化输出 → 选择该节点的 **JSON / structured_output**（名称以控制台为准）；
+   - 否则 → 选择 `LLM.text`。
+3. **检查并删除** `arg2` 等未使用输入变量（见下方排查）。
+4. 在「输出变量」声明 `valid`（布尔）、`result`（字符串）、`error`（字符串）。
+5. 将 [`code-node-resume.py`](code-node-resume.py) 全部粘贴到代码编辑区并保存。
+
+### 常见错误：`unexpected keyword argument 'arg2'`
+
+**根因：** 代码节点输入区存在变量名 `arg2`（常为 Dify 默认占位或未删干净的测试变量），但旧版 `main()` 只接受 `llm_output` 等固定参数。
+
+**排查步骤（中文）：**
+
+1. 打开报错的 **代码** 节点 → **输入变量** 列表。
+2. 查看是否除 `llm_raw_output` 外还有 **`arg2`、`arg1`、`input` 等** 未使用项。
+3. 点击 **删除** 所有与 `main()` 无关的变量；只保留 `llm_raw_output`。
+4. 确认 `llm_raw_output` 已正确绑定上游 LLM（结构化 JSON 或 text，二选一）。
+5. 将仓库最新 [`code-node-resume.py`](code-node-resume.py) 全文粘贴覆盖节点代码（含 `def main(llm_raw_output=None, **kwargs)`）。
+6. 保存后在 Studio 重新运行；用示例输入 `{ "basic": { "name": null, ... } }` 验证 `valid=true`。
 
 ### 条件分支与失败重试（简述）
 
@@ -170,6 +211,7 @@ DIFY_BASE_URL=https://api.dify.ai/v1
 
 | 现象 | 可能原因 | 处理 |
 |------|----------|------|
+| `TypeError: ... unexpected keyword argument 'arg2'` | 代码节点输入区留有 `arg2` 等未声明变量 | 删除多余输入变量，仅保留 `llm_raw_output`；见第五节排查 |
 | 提取结果为空 | 扫描 PDF、加密 PDF | 要求用户提供可选中文本的 PDF |
 | JSON 经常失败 | 温度过高、未约束仅 JSON | 降低温度，强化系统提示词 |
 | 字段幻觉 | 原文无该项 | 提示词要求「无则 null 或 []」 |
