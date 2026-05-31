@@ -143,9 +143,11 @@ markdown = to_display_markdown(en_json)
 
 ---
 
-## 示例：`display_markdown` 输出（脱敏）
+## 示例：`display_markdown` 输出（虚构脱敏）
 
-以下由 [`code-node-display-zh.py`](code-node-display-zh.py) 对一份**应届软件工程**简历 JSON 生成；姓名保留便于对照结构，**手机号、邮箱已脱敏**。
+> **禁止**将真实简历或个人身份信息（PII）写入本仓库的文档、示例 JSON 或 Issue；请一律使用与 [`examples/output-sample.json`](../examples/output-sample.json) 同风格的虚构数据。
+
+以下由 [`code-node-display-zh.py`](code-node-display-zh.py) 对一份**虚构应届软件工程**简历 JSON 生成，字段均为示例占位，不对应任何真实个人。
 
 <details>
 <summary>输入 JSON（英文键，节选）</summary>
@@ -171,7 +173,7 @@ markdown = to_display_markdown(en_json)
   "work_experience": [
     {
       "company": "示例科技有限公司",
-      "title": null,
+      "title": "数据开发实习生",
       "start_date": "2023-09",
       "end_date": "2024-02",
       "description": "负责数据库日常管理与维护，编写并优化 SQL 语句……"
@@ -184,8 +186,8 @@ markdown = to_display_markdown(en_json)
       "description": "参与演示数仓项目，负责数据采集与数据处理流程……"
     }
   ],
-  "skills": ["Java", "Python", "Hadoop", "Spark", "Hive", "Kafka", "Docker", "PyTorch"],
-  "summary": "软件工程本科，具备数据库管理、SQL 优化、数据仓库项目和生成式 AI 项目实践经验……"
+  "skills": ["Java", "Python", "Hadoop", "Spark", "Hive", "Kafka", "Docker", "Git"],
+  "summary": "软件工程本科，具备数据库管理、SQL 优化与数据仓库项目实践经验……"
 }
 ```
 
@@ -213,6 +215,7 @@ markdown = to_display_markdown(en_json)
 ## 工作/项目经历
 ### 经历 1
 - **公司/项目**：示例科技有限公司
+- **职位**：数据开发实习生
 - **时间**：2023-09 ~ 2024-02
 - **职责描述**：负责数据库日常管理与维护，编写并优化 SQL 语句……
 
@@ -222,10 +225,10 @@ markdown = to_display_markdown(en_json)
 - **职责描述**：参与演示数仓项目，负责数据采集与数据处理流程……
 
 ## 技能特长
-Java、Python、Hadoop、Spark、Hive、Kafka、Docker、PyTorch
+Java、Python、Hadoop、Spark、Hive、Kafka、Docker、Git
 
 ## 职业摘要
-软件工程本科，具备数据库管理、SQL 优化、数据仓库项目和生成式 AI 项目实践经验……
+软件工程本科，具备数据库管理、SQL 优化与数据仓库项目实践经验……
 ```
 
 ---

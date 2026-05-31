@@ -83,6 +83,7 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 
 ### 隐私与合规
 
+- **禁止**将真实简历、真实姓名、身份证号、完整手机号、邮箱等 PII 写入仓库文档、示例 JSON 或公开 Issue；请使用 [`examples/output-sample.json`](examples/output-sample.json) 风格的虚构脱敏数据
 - 不要将真实姓名、身份证号、完整手机号等写入 Git 或公开 Issue
 - 生产环境应对 API 做鉴权、审计日志与数据保留策略
 - 若处理欧盟等地区用户数据，需评估 GDPR 等合规要求
