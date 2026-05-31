@@ -1,0 +1,36 @@
+{
+  "basic": {
+    "name": "张某某",
+    "phone": "138****0000",
+    "email": "zhang.example@mail.demo",
+    "city": "上海",
+    "years_of_experience": 5
+  },
+  "education": [
+    {
+      "school": "示例理工大学",
+      "major": "计算机科学与技术",
+      "degree": "本科",
+      "start_date": "2014-09",
+      "end_date": "2018-06"
+    }
+  ],
+  "work_experience": [
+    {
+      "company": "示例科技有限公司",
+      "title": "后端开发工程师",
+      "start_date": "2021-03",
+      "end_date": null,
+      "description": "负责内部 API 设计与 Python 服务维护；参与简历解析 POC 项目。"
+    },
+    {
+      "company": "演示信息系统公司",
+      "title": "初级开发",
+      "start_date": "2018-07",
+      "end_date": "2021-02",
+      "description": "参与 ERP 模块开发与单元测试。"
+    }
+  ],
+  "skills": ["Python", "FastAPI", "PostgreSQL", "Docker", "Git"],
+  "summary": "五年后端开发经验，熟悉 API 设计与数据提取类 POC，期望继续在工程效率方向深耕。"
+}

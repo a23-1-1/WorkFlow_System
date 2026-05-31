@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/resume-extract.json",
+  "title": "ResumeExtractResult",
+  "description": "Dify 简历提取工作流的标准输出结构（学习用）",
+  "type": "object",
+  "required": ["basic", "education", "work_experience", "skills", "summary"],
+  "additionalProperties": false,
+  "properties": {
+    "basic": {
+      "type": "object",
+      "required": ["name", "phone", "email", "city", "years_of_experience"],
+      "properties": {
+        "name": { "type": ["string", "null"], "description": "姓名" },
+        "phone": { "type": ["string", "null"], "description": "联系电话" },
+        "email": { "type": ["string", "null"], "format": "email", "description": "邮箱" },
+        "city": { "type": ["string", "null"], "description": "城市" },
+        "years_of_experience": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "工作年限（年）"
+        }
+      }
+    },
+    "education": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["school"],
+        "properties": {
+          "school": { "type": "string" },
+          "major": { "type": ["string", "null"] },
+          "degree": { "type": ["string", "null"], "description": "如：本科、硕士" },
+          "start_date": { "type": ["string", "null"], "pattern": "^\\d{4}(-\\d{2})?$" },
+          "end_date": { "type": ["string", "null"], "pattern": "^\\d{4}(-\\d{2})?$" }
+        }
+      }
+    },
+    "work_experience": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["company"],
+        "properties": {
+          "company": { "type": "string" },
+          "title": { "type": ["string", "null"] },
+          "start_date": { "type": ["string", "null"] },
+          "end_date": { "type": ["string", "null"] },
+          "description": { "type": ["string", "null"], "maxLength": 500 }
+        }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "summary": {
+      "type": ["string", "null"],
+      "maxLength": 200,
+      "description": "职业摘要"
+    }
+  }
+}

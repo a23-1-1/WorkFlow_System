@@ -1,0 +1,42 @@
+# 环境与密钥
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets/
+
+# 简历与原始文档（勿提交真实文件）
+*.pdf
+*.doc
+*.docx
+*.rtf
+resumes/
+uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 编辑器与系统
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志与临时文件
+*.log
+tmp/
+temp/
+.cache/
