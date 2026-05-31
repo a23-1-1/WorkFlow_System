@@ -1,0 +1,11 @@
+请根据以下「简历原文」，严格按系统提示中的 JSON Schema 提取结构化信息。
+
+要求：
+1. 只使用下方「简历原文」中的信息，不要编造。
+2. 若「简历原文」为空或仅有空白/未替换的 {{#...#}}，在 JSON 根对象填写 error 说明原因，其余字段按 Schema 留空。
+3. 若正文非空，至少提取 name、education 或 work_experience 中的一项；禁止 name、education、work_experience、skills 同时全空。
+4. 无「姓名：」「教育背景：」等标签时：文首姓名、手机号、@邮箱、届别/学校→education、实习项目→work_experience、技术词→skills。
+5. 只输出一个 JSON 对象，不要 Markdown 代码块。
+
+【简历原文】
+{{#文档提取器.text#}}

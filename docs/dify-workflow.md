@@ -60,28 +60,20 @@
 
 ### 提示词
 
-- **系统提示词**：复制仓库内 [`prompt-system.txt`](prompt-system.txt) **「输出要求」及以上**正文（不要复制文件末尾「用户消息模板」到 system）。
-- **用户消息**（必填）：必须粘贴 [`prompt-system.txt`](prompt-system.txt) 文末 **「LLM 用户消息模板」** 全文，并确保 `【简历原文】` 下方引用了文档提取器输出。
+- **系统提示词**：复制 [`prompt-system.txt`](prompt-system.txt) **全文**到 LLM 的 system（该文件仅含 system，不含用户消息）。
+- **用户消息**（必填）：复制 [`prompt-user-template.txt`](prompt-user-template.txt) **全文**到 USER，并确保 `【简历原文】` 下方引用了文档提取器输出（默认 `{{#文档提取器.text#}}`）。
 
-常见正确写法（节点默认输出为 `text` 时）：
+变量名与画布一致时修改占位符即可：
 
-```text
-请根据以下「简历原文」，严格按系统提示中的 JSON Schema 提取结构化信息。
+| 场景 | 占位符示例 |
+|------|------------|
+| 提取器输出 `text`（默认） | `{{#文档提取器.text#}}` |
+| 自定义 `extracted_text` | `{{#文档提取器.extracted_text#}}` |
+| 仅文本输入 `resume_text` | `{{#开始.resume_text#}}` |
 
-要求：
-1. 只使用下方「简历原文」中的信息，不要编造。
-2. 若「简历原文」为空或仅有空白，在 JSON 根对象中填写 error 字段说明原因，其余字段按 Schema 留空。
-3. 只输出一个 JSON 对象，不要 Markdown 代码块。
+> **常见故障**：只配置了 system + 结构化输出 Schema，但 **用户消息为空或未引用 `text`** → LLM 收不到简历正文，会输出全 `null` / 空数组，代码节点仍可能 `valid=true`。若 Trace 显示 USER **已有正文**仍全空，请换用最新 `prompt-system.txt` / `prompt-user-template.txt`，或暂时关闭「仅结构化输出」、降低温度后重试。排查见 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md)。
 
-【简历原文】
-{{#文档提取器.text#}}
-```
-
-若输出变量名为 `extracted_text`，改为 `{{#文档提取器.extracted_text#}}`；若仅文本输入，改为 `{{#开始.resume_text#}}`。
-
-> **常见故障**：只配置了 system + 结构化输出 Schema，但 **用户消息为空或未引用 `text`** → LLM 收不到简历正文，会输出全 `null` / 空数组，代码节点仍可能 `valid=true`。排查见 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md)。
-
-> 变量引用语法以 Dify 当前版本为准，常见为 `{{#节点名.变量名#}}`。运行后在 Trace 中确认 USER 消息里占位符已被**真实正文**替换。
+> 变量引用语法以 Dify 当前版本为准，常见为 `{{#节点名.变量名#}}`。运行后在 Trace 中确认 USER 消息里占位符已被**真实正文**替换。开启 JSON Schema 时模型仍须阅读 USER 全文，不可用全 null 通过校验。
 
 ### 输出
 
@@ -235,7 +227,8 @@ DIFY_BASE_URL=https://api.dify.ai/v1
 
 | 文件 | 用途 |
 |------|------|
-| `prompt-system.txt` | LLM 系统提示词 + **用户消息模板** |
+| `prompt-system.txt` | LLM **系统** 提示词（全文粘贴到 system） |
+| `prompt-user-template.txt` | LLM **用户消息**模板（全文粘贴到 USER） |
 | `troubleshooting-empty-output.md` | 全 null / 空数组排查（docx、变量引用、Trace） |
 | `code-node-resume.py` | 云端 Python3 代码节点全文（复制粘贴） |
 | `../examples/schema-resume.json` | 字段说明与类型约定 |

@@ -31,15 +31,16 @@
    - 仍显示 `{{#文档提取器.text#}}` 等未替换占位符 → 变量名或节点名写错。
    - 引用了 `extracted_text`，但提取器实际输出变量是 `text`（或反之）。
 
-**对照**：用户消息应使用 [`prompt-system.txt`](prompt-system.txt) 文末模板，且占位符与画布变量一致。
+**对照**：用户消息应使用 [`prompt-user-template.txt`](prompt-user-template.txt)，且占位符与画布变量一致。
 
 ### 步骤 3：LLM 节点 — 输出是否为「空 Schema」
 
 1. 查看 LLM **输出**（结构化 JSON 或 text）。
-2. 若输入已有完整正文，但输出仍全 `null` / `[]`：
-   - 检查 **系统提示词** 是否已更新为仓库最新 `prompt-system.txt`（需强调「必须从简历原文提取」）。
-   - 检查是否 **温度过低/过高** 或 **max tokens 过小** 导致截断（少见，但长简历需足够 token）。
-   - 检查 **结构化输出 Schema** 是否与提示词字段一致；模型是否在「无正文」时习惯性填 null（更新 system 后重试）。
+2. 若输入已有完整正文，但输出仍全 `null` / `[]`（**输入有字、输出仍空**）：
+   - 换用仓库最新 [`prompt-system.txt`](prompt-system.txt) + [`prompt-user-template.txt`](prompt-user-template.txt)，确认禁止「有正文时四项核心字段同时全空」。
+   - 若已开 **JSON Schema / 结构化输出**，模型仍须读 USER 全文；可暂时关闭纯结构化约束或换模型后重试。
+   - 检查 **温度** 或 **max tokens** 是否导致截断（长简历需足够 token）。
+   - 检查 **结构化输出 Schema** 是否与提示词字段一致（可选 `error` 字段需在 Schema 中声明）。
 3. 若 LLM 输出含 `error` 字段 → 模型判定未收到正文，回到步骤 1、2。
 
 ### 步骤 4：代码节点 — 区分「解析成功」与「提取成功」
@@ -61,7 +62,7 @@
 |------|------------|------|
 | 文档提取器 `text` 为空 | docx 损坏、加密、上传失败、未连接开始节点 `resume_file` | 换 txt 测通链路；检查文件输入连线 |
 | 提取器有字，LLM USER 为空 | 用户消息未引用 `{{#文档提取器.text#}}` 或变量名错误 | 使用 `prompt-system.txt` 模板并改正变量名 |
-| USER 有字，输出仍全 null | 系统提示未要求从正文提取；或仅开结构化输出、USER 为空（模型无正文） | 更新 system + user 模板；Studio 重跑 |
+| USER 有字，输出仍全 null | 提示词过旧；或结构化输出下模型未读正文、用全 null 糊弄 | 更新 `prompt-system.txt` + `prompt-user-template.txt`；可关结构化输出后重试 |
 | 偶发全 null | 模型/context 限制、超长简历截断 | 换模型、增大 max tokens、截断前 N 字再传入 |
 
 ---
@@ -121,7 +122,7 @@
 ## 五、推荐修复清单（Dify 界面）
 
 - [ ] 文档提取器已连接 `resume_file`，且 Trace 中 `text` 非空
-- [ ] LLM **用户消息**（非 system）含 `【简历原文】` + 正确 `{{#节点.变量#}}`
+- [ ] LLM **用户消息**（非 system）已粘贴最新 [`prompt-user-template.txt`](prompt-user-template.txt)，含 `【简历原文】` + 正确 `{{#节点.变量#}}`
 - [ ] 系统提示词已替换为最新 [`prompt-system.txt`](prompt-system.txt)
 - [ ] 结构化输出 Schema 与提示词字段一致（若启用 `error` 字段，需在 Schema 中增加 optional `error`）
 - [ ] 代码节点后增加条件：`name` 非空或 `education`/`work_experience` 非空再视为成功
@@ -132,6 +133,6 @@
 ## 六、相关文档
 
 - 工作流搭建：[`dify-workflow.md`](dify-workflow.md)
-- 系统提示与用户模板：[`prompt-system.txt`](prompt-system.txt)
+- 系统提示：[`prompt-system.txt`](prompt-system.txt)；用户模板：[`prompt-user-template.txt`](prompt-user-template.txt)
 - 代码节点：[`code-node-resume.py`](code-node-resume.py)
 - 输出 Schema：[`../examples/schema-resume.json`](../examples/schema-resume.json)
