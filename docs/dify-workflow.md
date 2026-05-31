@@ -80,64 +80,58 @@
 
 ---
 
-## 五、代码节点 — JSON 校验与规范化
+## 五、代码节点（云端 Python3）— JSON 校验与规范化
 
 ### 目的
 
-- 解析 JSON，捕获格式错误
-- 校验必填字段（如 `basic`、`work_experience`）
-- 可选：截断过长字段、统一日期格式
+- 剥离 LLM 可能返回的 Markdown 代码块，用 `json.loads` 解析
+- 对顶层与子字段做 `setdefault` 补全，`skills` 去重
+- 邮箱简单正则校验（无效时保留原文并标记 `basic._email_invalid`）
+- 手机号归一化（去非数字、大陆 11 位取后 11 位；国际号/座机见代码注释局限）
 
-### 示例逻辑（Python）
+### 完整代码
 
-```python
-import json
-import re
+将仓库内 [`code-node-resume.py`](code-node-resume.py) **全文复制**到 Dify 代码节点，勿遗漏 `import` 与 `main` 函数。
 
-def main(llm_raw_output: str) -> dict:
-    text = (llm_raw_output or "").strip()
-    # 去掉可能的 markdown 围栏
-    text = re.sub(r"^```(?:json)?\s*", "", text)
-    text = re.sub(r"\s*```$", "", text)
+### 在 Dify 中配置
 
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError as e:
-        return {
-            "success": False,
-            "error": f"JSON 解析失败: {e}",
-            "data": None,
-        }
+| 项 | 说明 |
+|----|------|
+| 节点类型 | **代码**，语言选 **Python 3**（云端） |
+| 输入变量 `llm_output` | 绑定上一 **LLM** 节点的 **text** 输出（即模型原始文本） |
+| 输出变量 `valid` | 布尔：`true` 表示 JSON 解析与规范化成功 |
+| 输出变量 `result` | 字符串：规范化后的 JSON（`ensure_ascii=False`，中文不转义） |
+| 输出变量 `error` | 字符串：失败原因；成功时为空字符串 |
 
-    required = ["basic", "education", "work_experience", "skills"]
-    missing = [k for k in required if k not in data]
-    if missing:
-        return {
-            "success": False,
-            "error": f"缺少字段: {', '.join(missing)}",
-            "data": data,
-        }
+配置步骤：
 
-    return {"success": True, "error": None, "data": data}
-```
+1. 从节点面板拖入 **代码** 节点，接在 LLM 节点之后。
+2. 在「输入变量」新增 `llm_output`，值选 `LLM.text`（或你命名的 LLM 节点下的 text 字段）。
+3. 在「输出变量」声明 `valid`（布尔）、`result`（字符串）、`error`（字符串）。
+4. 将 [`code-node-resume.py`](code-node-resume.py) 全部粘贴到代码编辑区并保存。
 
-### 在 Dify 中
+### 条件分支与失败重试（简述）
 
-1. 添加 **代码** 节点，语言选 Python 3。
-2. 输入：`llm_raw_output`（来自 LLM 节点）。
-3. 输出：`success`、`error`、`data`（类型与控制台要求一致）。
+解析失败时不应直接把脏数据交给结束节点，建议在代码节点后增加 **条件分支**：
+
+- **若** `valid` 为 `true` → 连接 **结束** 节点，将 `result` 作为业务输出（API 侧可再 `json.loads`）。
+- **若** `valid` 为 `false` → 可选路径：
+  - 将 `error` 写入结束节点的错误字段，直接返回给调用方；
+  - 或接回 **LLM** 节点重试（在提示词中附带 `error` 与上一轮输出，要求仅输出修正后的 JSON），并限制最大重试次数以防循环。
+
+Studio 调试时可故意让模型返回带 \`\`\`json 围栏或缺字段的文本，确认 `valid=false` 与 `error` 文案符合预期。
 
 ---
 
 ## 六、结束节点与变量输出
 
-1. 将代码节点的 `data` 连接到 **结束** 节点。
-2. 在「输出变量」中暴露：
-   - `success`（布尔）
+1. 经条件分支（见上一节）将成功路径的 `result` 连接到 **结束** 节点。
+2. 在「输出变量」中暴露，例如：
+   - `valid`（布尔，来自代码节点）
    - `error`（字符串，可空）
-   - `resume_json`（对象，即 `data`）
+   - `resume_json`（字符串或对象：若 Dify 允许对象类型可直接映射 `result`；否则 API 侧对 `result` 做 `json.loads`）
 
-便于 API 调用方判断业务是否成功。
+便于 API 调用方根据 `valid` 判断业务是否成功。
 
 ---
 
@@ -145,7 +139,8 @@ def main(llm_raw_output: str) -> dict:
 
 - [ ] 上传短 TXT 简历，JSON 可解析
 - [ ] 上传多页 PDF，教育/工作经历未大面积丢失
-- [ ] 故意缺少「工作经历」的文本，观察 `success=false` 与 `error` 文案
+- [ ] 故意缺少「工作经历」的文本，观察 LLM 输出经代码节点后 `valid` 与 `result` 是否仍可用（缺字段由 `setdefault` 补全）
+- [ ] 无效邮箱或带 +86 的手机号，确认 `_email_invalid` 标记与手机归一化结果
 - [ ] 模型返回带 \`\`\`json 围栏时，代码节点仍能解析
 
 ---
@@ -187,7 +182,8 @@ DIFY_BASE_URL=https://api.dify.ai/v1
 | 文件 | 用途 |
 |------|------|
 | `prompt-system.txt` | LLM 系统提示词 |
-| `schema-resume.json` | 字段说明与类型约定 |
-| `output-sample.json` | 虚构脱敏输出样例 |
+| `code-node-resume.py` | 云端 Python3 代码节点全文（复制粘贴） |
+| `../examples/schema-resume.json` | 字段说明与类型约定 |
+| `../examples/output-sample.json` | 虚构脱敏输出样例 |
 
 完成搭建后，可将本仓库链接写在个人 README 或学习笔记中，**勿提交真实简历与密钥**。

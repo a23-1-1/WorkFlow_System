@@ -94,6 +94,7 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 ├── README.md
 ├── docs/
 │   ├── dify-workflow.md
+│   ├── code-node-resume.py
 │   └── prompt-system.txt
 ├── examples/
 │   ├── schema-resume.json
