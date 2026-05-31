@@ -39,13 +39,14 @@
 
 1. 从节点面板拖入 **文档提取器**（或「文档」类节点）。
 2. 将 **开始** 节点的 `resume_file` 连接到文档提取器的文件输入。
-3. 输出变量命名建议：`extracted_text`。
-4. 在节点说明中注明：扫描版 PDF 若无 OCR 可能提取失败，需用户改用可选文本的 PDF。
+3. 输出变量：Dify 默认常为 **`text`**；若重命名为 `extracted_text`，LLM 用户消息中的 `{{#...#}}` 必须与此**完全一致**。
+4. 在节点说明中注明：扫描版 PDF 若无 OCR 可能提取失败；复杂 docx 表格/文本框可能提取不全。
 
 ### 调试
 
-- 使用一份 **无真实 PII** 的样例 PDF（或 txt）在 Studio 运行。
-- 检查输出是否包含关键段落（教育、工作经历）。
+- 使用一份 **无真实 PII** 的样例 PDF / docx / txt 在 Studio 运行。
+- 在 **追踪** 中展开文档提取器，确认 `text`（或 `extracted_text`）**非空**且含姓名、教育、项目等段落。
+- 若 docx 提取为空，见 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md) 第三节「docx 测试方法」。
 
 ---
 
@@ -59,19 +60,28 @@
 
 ### 提示词
 
-- **系统提示词**：复制仓库内 [`prompt-system.txt`](prompt-system.txt) 全文。
-- **用户消息**：模板示例：
+- **系统提示词**：复制仓库内 [`prompt-system.txt`](prompt-system.txt) **「输出要求」及以上**正文（不要复制文件末尾「用户消息模板」到 system）。
+- **用户消息**（必填）：必须粘贴 [`prompt-system.txt`](prompt-system.txt) 文末 **「LLM 用户消息模板」** 全文，并确保 `【简历原文】` 下方引用了文档提取器输出。
+
+常见正确写法（节点默认输出为 `text` 时）：
 
 ```text
-请根据以下简历原文，严格按系统提示中的 JSON Schema 提取信息并输出 JSON。
+请根据以下「简历原文」，严格按系统提示中的 JSON Schema 提取结构化信息。
+
+要求：
+1. 只使用下方「简历原文」中的信息，不要编造。
+2. 若「简历原文」为空或仅有空白，在 JSON 根对象中填写 error 字段说明原因，其余字段按 Schema 留空。
+3. 只输出一个 JSON 对象，不要 Markdown 代码块。
 
 【简历原文】
-{{#extracted_text#}}
+{{#文档提取器.text#}}
 ```
 
-若使用条件分支仅文本输入，将 `extracted_text` 替换为 `resume_text`。
+若输出变量名为 `extracted_text`，改为 `{{#文档提取器.extracted_text#}}`；若仅文本输入，改为 `{{#开始.resume_text#}}`。
 
-> 变量引用语法以 Dify 当前版本为准，常见为 `{{#节点名.变量名#}}`。
+> **常见故障**：只配置了 system + 结构化输出 Schema，但 **用户消息为空或未引用 `text`** → LLM 收不到简历正文，会输出全 `null` / 空数组，代码节点仍可能 `valid=true`。排查见 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md)。
+
+> 变量引用语法以 Dify 当前版本为准，常见为 `{{#节点名.变量名#}}`。运行后在 Trace 中确认 USER 消息里占位符已被**真实正文**替换。
 
 ### 输出
 
@@ -155,7 +165,8 @@ TypeError: main() got an unexpected keyword argument 'arg2'
 
 解析失败时不应直接把脏数据交给结束节点，建议在代码节点后增加 **条件分支**：
 
-- **若** `valid` 为 `true` → 连接 **结束** 节点，将 `result` 作为业务输出（API 侧可再 `json.loads`）。
+- **若** `valid` 为 `true` **且** 提取结果非空（例如 `basic.name` 非 null，或 `education` / `work_experience` 至少一项）→ 连接 **结束** 节点，将 `result` 作为业务输出。
+- **若** `valid` 为 `true` 但字段全空 → 视为 **提取失败**（LLM 未收到正文或未抽取），返回错误说明，见 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md)。
 - **若** `valid` 为 `false` → 可选路径：
   - 将 `error` 写入结束节点的错误字段，直接返回给调用方；
   - 或接回 **LLM** 节点重试（在提示词中附带 `error` 与上一轮输出，要求仅输出修正后的 JSON），并限制最大重试次数以防循环。
@@ -211,8 +222,9 @@ DIFY_BASE_URL=https://api.dify.ai/v1
 
 | 现象 | 可能原因 | 处理 |
 |------|----------|------|
+| `valid=true` 但 JSON 全 null / 空数组 | 文档提取器 `text` 为空；或 LLM 用户消息未引用 `{{#文档提取器.text#}}`；或仅有 system 无正文 | 按 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md) 逐步查 Trace |
 | `TypeError: ... unexpected keyword argument 'arg2'` | 代码节点输入区留有 `arg2` 等未声明变量 | 删除多余输入变量，仅保留 `llm_raw_output`；见第五节排查 |
-| 提取结果为空 | 扫描 PDF、加密 PDF | 要求用户提供可选中文本的 PDF |
+| 提取结果为空 | 扫描 PDF、加密 PDF、docx 表格/文本框 | 改 txt 测链路；要求可选中文本的文件 |
 | JSON 经常失败 | 温度过高、未约束仅 JSON | 降低温度，强化系统提示词 |
 | 字段幻觉 | 原文无该项 | 提示词要求「无则 null 或 []」 |
 | Token 超限 | 简历过长 | 代码节点截断 `extracted_text` 前 N 字符 |
@@ -223,7 +235,8 @@ DIFY_BASE_URL=https://api.dify.ai/v1
 
 | 文件 | 用途 |
 |------|------|
-| `prompt-system.txt` | LLM 系统提示词 |
+| `prompt-system.txt` | LLM 系统提示词 + **用户消息模板** |
+| `troubleshooting-empty-output.md` | 全 null / 空数组排查（docx、变量引用、Trace） |
 | `code-node-resume.py` | 云端 Python3 代码节点全文（复制粘贴） |
 | `../examples/schema-resume.json` | 字段说明与类型约定 |
 | `../examples/output-sample.json` | 虚构脱敏输出样例 |

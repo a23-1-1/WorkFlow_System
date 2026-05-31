@@ -87,6 +87,10 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 - 长简历会消耗较多 Token，可对文档提取结果做长度截断（在代码节点中实现）
 - 选用支持结构化输出的模型，并在提示词中固定「仅输出 JSON、无 Markdown 围栏」
 
+### 故障排查
+
+- **`valid=true` 但字段全为 null / 空数组**：通常是文档提取器无正文，或 LLM **用户消息**未引用 `{{#文档提取器.text#}}`。逐步排查见 [`docs/troubleshooting-empty-output.md`](docs/troubleshooting-empty-output.md)。
+
 ## 仓库结构
 
 ```
@@ -94,6 +98,7 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 ├── README.md
 ├── docs/
 │   ├── dify-workflow.md
+│   ├── troubleshooting-empty-output.md
 │   ├── code-node-resume.py
 │   └── prompt-system.txt
 ├── examples/
