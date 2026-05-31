@@ -52,7 +52,7 @@
 
 ## 四、LLM 节点 — 结构化输出
 
-> **默认推荐：方案 A**（简历正文只走 USER，上下文留空）。完整操作清单见 [`dify-llm-setup-plan-a.md`](dify-llm-setup-plan-a.md)。
+> **默认推荐：方案 A**（简历正文只走 USER，上下文留空）。三步清单见 [`dify-llm-setup-plan-a.md`](dify-llm-setup-plan-a.md)。
 
 ### 模型选择
 
@@ -60,34 +60,70 @@
 - **温度**：0 ~ 0.3，降低随意发挥。
 - **最大 Token**：按简历平均长度上调，避免截断。
 
-### 方案 A：提示词与变量（推荐）
+### 方案 A（推荐）：只配 SYSTEM + USER
+
+本仓库 **默认采用方案 A**：简历正文 **唯一** 通过 USER 传入；SYSTEM 仅放规则与 Schema；**不** 在 LLM「上下文（Context）」挂文档提取器。
 
 | 区域 | 粘贴内容 | 是否引用简历变量 |
 |------|----------|------------------|
-| **SYSTEM** | [`prompt-system.txt`](prompt-system.txt) 全文 | **否** — 不含 `{{#...#}}` |
-| **USER** | [`prompt-user-template.txt`](prompt-user-template.txt) 全文 | **是** — `【简历原文】` 下引用提取器 |
-| **上下文（Context）** | **留空，不添加任何变量** | **否** — 避免橙字「要启用上下文功能…」警告 |
+| **SYSTEM** | 仅 [`prompt-system.txt`](prompt-system.txt) 全文 | **否** — 不含任何 `{{#...#}}` |
+| **USER** | [`prompt-user-template.txt`](prompt-user-template.txt) 全文 | **是** — `【简历原文】` 下一行引用提取器 |
+| **上下文（Context）** | **留空**；若曾添加过变量请 **删除** | **否** — 避免橙字警告与全 null |
 
-**界面操作（截图式步骤）：**
+#### 界面操作（截图式步骤 · 中文）
 
-1. 打开 LLM 节点 → 找到 **SYSTEM / 系统提示词** 输入框 → 粘贴 [`prompt-system.txt`](prompt-system.txt) 全文 → 保存。
-2. 切换到 **USER / 用户消息** 输入框 → 粘贴 [`prompt-user-template.txt`](prompt-user-template.txt) 全文（含顶部 3 行配置说明可保留或删除）→ 确认 `【简历原文】` 下一行是 `{{#文档提取器.text#}}`（或与你画布一致的占位符）。
-3. 展开 **上下文（Context）** 面板 → **不要** 点击「添加变量」或拖入文档提取器输出 → 保持为空。
-4. Studio 运行一次 → **追踪（Trace）** → 展开 LLM → 在 USER 消息中找到 `【简历原文】` → 其下方应为**真实中文段落**（非空、非未替换的 `{{#...#}}`）。
+**第 1 步 — 配置 SYSTEM**
 
-变量名与画布一致时，仅改 USER 模板中的占位符：
+1. 双击画布上的 **LLM** 节点，打开右侧配置面板。
+2. 找到 **SYSTEM / 系统提示词** 大文本框（通常在 USER 上方）。
+3. 打开本仓库 [`prompt-system.txt`](prompt-system.txt)，**Ctrl+A 全选 → 复制 → 粘贴** 到 SYSTEM 框。
+4. 检查 SYSTEM 内 **没有** `{{#文档提取器.text#}}` 等变量占位符 → 点击 **保存**。
 
-| 场景 | USER 中占位符示例 |
-|------|-------------------|
+**第 2 步 — 配置 USER（必做，不可省略）**
+
+1. 在同一 LLM 面板，切换到 **USER / 用户消息** 输入框。
+2. 打开 [`prompt-user-template.txt`](prompt-user-template.txt)，**全文粘贴**（含顶部「仅粘贴到 USER」说明与文末配置提醒）。
+3. 向下滚动，找到 **`【简历原文】`** 标记 → 其 **紧下一行** 必须是：
+   ```text
+   {{#文档提取器.text#}}
+   ```
+   （节点名或输出变量改名时，只改这一行占位符，与 Trace 里文档提取器实际变量名一致。）
+4. **不要** 只在「上下文」里加 `text` 而 USER 留空——模型 Trace 中 USER 无正文时会输出全 `null`，代码节点仍可能 `valid=true`。
+5. 保存 LLM 节点。
+
+**第 3 步 — 上下文留空或删除已有变量**
+
+1. 在 LLM 配置中找到 **上下文（Context）** 折叠区并展开。
+2. **正确**：列表为空，未添加任何上游变量。
+3. **若曾添加** 文档提取器的 `text` / `extracted_text`：点击变量右侧 **删除（×）**，直到上下文为空。
+4. 保存后，面板 **不应** 再出现橙字：**「要启用上下文功能，请在提示词中引用上下文变量」**。
+
+**第 4 步 — Trace 自检**
+
+1. Studio 上传样例简历 → **运行**。
+2. 打开 **追踪（Trace）** → 展开 **LLM** → 查看 **USER** 消息。
+3. 定位 `【简历原文】` → **下方必须是真实中文段落**（姓名、学校、项目等），不能是空，不能仍是未替换的 `{{#...#}}`。
+4. 若 USER 有正文但 JSON 仍全 null → 见 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md)。
+
+#### 变量名对照（只改 USER 中一行）
+
+| 场景 | USER 中 `【简历原文】` 下占位符 |
+|------|--------------------------------|
 | 提取器输出 `text`（默认） | `{{#文档提取器.text#}}` |
-| 自定义 `extracted_text` | `{{#文档提取器.extracted_text#}}` |
+| 输出改名为 `extracted_text` | `{{#文档提取器.extracted_text#}}` |
 | 仅文本输入 `resume_text` | `{{#开始.resume_text#}}` |
 
-> **为何不挂上下文？** 若只在 LLM「上下文」里引用 `text` 而 USER 为空，Dify 可能提示橙字「要启用上下文功能…」，且 Trace 中 USER 无正文时模型仍可能输出全 `null`。方案 A 把简历**唯一**放进 USER，与 [`prompt-system.txt`](prompt-system.txt) 的「输入前提」一致。
+#### 橙字警告原因（简要）
 
-> **常见故障**：只配置了 system + 结构化输出 Schema，但 **USER 为空或未引用 `text`** → LLM 收不到简历正文，会输出全 `null` / 空数组，代码节点仍可能 `valid=true`。若 Trace 显示 USER **已有正文**仍全空，请换用最新 `prompt-system.txt` / `prompt-user-template.txt`，或暂时关闭「仅结构化输出」、降低温度后重试。排查见 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md)。
+| 现象 | 原因 | 处理 |
+|------|------|------|
+| 橙字「要启用上下文功能…」 | 上下文已挂变量，但 USER/SYSTEM **未** 引用上下文变量 | **方案 A**：删除上下文变量，正文只放 USER（推荐） |
+| `valid=true` 但全 null | 只在上下文加了 `text`，USER 无 `【简历原文】` 正文 | 按第 2 步粘贴 [`prompt-user-template.txt`](prompt-user-template.txt) |
+| Trace 中 USER 为空 | USER 未引用 `{{#文档提取器.text#}}` 或占位符写错 | 对照上表修改变量名后重跑 |
 
-> 变量引用语法以 Dify 当前版本为准，常见为 `{{#节点名.变量名#}}`。Trace 自检：**`【简历原文】` 下方必须是真实正文**。开启 JSON Schema 时模型仍须阅读 USER 全文，不可用全 null 通过校验。
+> **禁止的配置**：只配 SYSTEM + 结构化输出 Schema + 上下文挂 `text`，**USER 为空** → 最常见「输入有字（在上下文）、输出全 null」故障。方案 A 要求 USER 含 `【简历原文】` + 变量，上下文留空。
+
+> 变量语法以 Dify 当前版本为准，常见为 `{{#节点名.变量名#}}`。开启 JSON Schema 时模型仍须阅读 USER 全文，不可用全 null 通过校验。
 
 ### 输出
 

@@ -32,16 +32,18 @@ flowchart LR
 
 ## 快速开始
 
+> **LLM 配置走方案 A？** 直接看 [`docs/dify-llm-setup-plan-a.md`](docs/dify-llm-setup-plan-a.md)（SYSTEM 仅 `prompt-system.txt` · USER 含 `【简历原文】` · 上下文留空）。
+
 1. **部署 Dify**  
    使用 [Dify 官方文档](https://docs.dify.ai/) 在云版或 Docker 自托管环境创建应用。
 
 2. **导入工作流思路**  
-   按 [`docs/dify-workflow.md`](docs/dify-workflow.md) 逐步添加节点并绑定变量。
+   按 [`docs/dify-workflow.md`](docs/dify-workflow.md) 逐步添加节点并绑定变量（第四节含方案 A 截图式步骤）。
 
 3. **配置提示词（方案 A）**  
    - SYSTEM：[`docs/prompt-system.txt`](docs/prompt-system.txt)  
    - USER：[`docs/prompt-user-template.txt`](docs/prompt-user-template.txt)（上下文留空）  
-   - 详见 [`docs/dify-llm-setup-plan-a.md`](docs/dify-llm-setup-plan-a.md)
+   - 三步清单：[`docs/dify-llm-setup-plan-a.md`](docs/dify-llm-setup-plan-a.md)
 
 4. **对齐输出结构**  
    参考 [`examples/schema-resume.json`](examples/schema-resume.json) 与 [`examples/output-sample.json`](examples/output-sample.json) 调整字段。
