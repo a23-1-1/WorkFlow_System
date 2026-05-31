@@ -30,8 +30,26 @@
    - `【简历原文】` 下方为空 → **用户消息未正确引用变量**（最常见配置错误之一）。
    - 仍显示 `{{#文档提取器.text#}}` 等未替换占位符 → 变量名或节点名写错。
    - 引用了 `extracted_text`，但提取器实际输出变量是 `text`（或反之）。
+   - 正文只挂在 LLM **上下文（Context）**，USER 几乎为空 → 模型可能读不到简历；见下方「橙字警告」。
 
-**对照**：用户消息应使用 [`prompt-user-template.txt`](prompt-user-template.txt)，且占位符与画布变量一致。
+**对照（方案 A，推荐）**：
+
+- **SYSTEM**：仅 [`prompt-system.txt`](prompt-system.txt)，不含简历变量。
+- **USER**：全文 [`prompt-user-template.txt`](prompt-user-template.txt)，`【简历原文】` + 正确 `{{#节点.变量#}}`。
+- **上下文**：留空，不添加文档提取器变量。
+
+操作清单：[`dify-llm-setup-plan-a.md`](dify-llm-setup-plan-a.md)。
+
+#### 橙字「要启用上下文功能…」
+
+Dify 在 LLM 节点 **上下文** 区域引用变量但未正确启用上下文时，可能出现橙色提示：**「要启用上下文功能，请在提示词中引用上下文变量」**。
+
+| 做法 | 说明 |
+|------|------|
+| **推荐：改用方案 A** | USER 粘贴 [`prompt-user-template.txt`](prompt-user-template.txt)（含 `{{#文档提取器.text#}}`），**上下文留空**。Trace 中检查 `【简历原文】` 下有真实正文即可。 |
+| **备选：坚持走上下文** | 必须在 **USER 或 SYSTEM** 中显式引用上下文变量（如 `{{#context#}}` 或你版本中的等价写法），并同时保证 Trace 里模型能读到完整简历；仅挂上下文、USER 无正文时仍易全 null。 |
+
+**不要** 只在上下文拖入 `text` 而 USER 为空——这与本仓库默认 **方案 A** 不符，也是「输入有字、输出仍空」的常见原因。
 
 ### 步骤 3：LLM 节点 — 输出是否为「空 Schema」
 
@@ -61,7 +79,8 @@
 | 现象 | 最可能根因 | 处理 |
 |------|------------|------|
 | 文档提取器 `text` 为空 | docx 损坏、加密、上传失败、未连接开始节点 `resume_file` | 换 txt 测通链路；检查文件输入连线 |
-| 提取器有字，LLM USER 为空 | 用户消息未引用 `{{#文档提取器.text#}}` 或变量名错误 | 使用 `prompt-system.txt` 模板并改正变量名 |
+| 提取器有字，LLM USER 为空 | 用户消息未引用 `{{#文档提取器.text#}}` 或变量名错误；或正文只挂在「上下文」 | 按 **方案 A**：USER 用 `prompt-user-template.txt`，上下文留空；见 [`dify-llm-setup-plan-a.md`](dify-llm-setup-plan-a.md) |
+| LLM 橙字「要启用上下文功能…」 | 上下文引用了变量但未在提示词中引用，或配置与方案 A 混用 | 改用方案 A（USER 含 `{{#文档提取器.text#}}`，上下文留空）；或必须在 USER/SYSTEM 引用上下文变量 |
 | USER 有字，输出仍全 null | 提示词过旧；或结构化输出下模型未读正文、用全 null 糊弄 | 更新 `prompt-system.txt` + `prompt-user-template.txt`；可关结构化输出后重试 |
 | 偶发全 null | 模型/context 限制、超长简历截断 | 换模型、增大 max tokens、截断前 N 字再传入 |
 
@@ -119,10 +138,13 @@
 
 ---
 
-## 五、推荐修复清单（Dify 界面）
+## 五、推荐修复清单（Dify 界面 · 方案 A）
 
 - [ ] 文档提取器已连接 `resume_file`，且 Trace 中 `text` 非空
-- [ ] LLM **用户消息**（非 system）已粘贴最新 [`prompt-user-template.txt`](prompt-user-template.txt)，含 `【简历原文】` + 正确 `{{#节点.变量#}}`
+- [ ] LLM **SYSTEM** 仅 [`prompt-system.txt`](prompt-system.txt)，**不含**简历 `{{#...#}}`
+- [ ] LLM **USER** 已粘贴最新 [`prompt-user-template.txt`](prompt-user-template.txt)，含 `【简历原文】` + 正确 `{{#节点.变量#}}`
+- [ ] LLM **上下文** 留空，未添加文档提取器变量（无橙字警告）
+- [ ] Trace 自检：`【简历原文】` 下方为真实正文（非占位符）
 - [ ] 系统提示词已替换为最新 [`prompt-system.txt`](prompt-system.txt)
 - [ ] 结构化输出 Schema 与提示词字段一致（若启用 `error` 字段，需在 Schema 中增加 optional `error`）
 - [ ] 代码节点后增加条件：`name` 非空或 `education`/`work_experience` 非空再视为成功
@@ -133,6 +155,7 @@
 ## 六、相关文档
 
 - 工作流搭建：[`dify-workflow.md`](dify-workflow.md)
+- 方案 A 操作清单：[`dify-llm-setup-plan-a.md`](dify-llm-setup-plan-a.md)
 - 系统提示：[`prompt-system.txt`](prompt-system.txt)；用户模板：[`prompt-user-template.txt`](prompt-user-template.txt)
 - 代码节点：[`code-node-resume.py`](code-node-resume.py)
 - 输出 Schema：[`../examples/schema-resume.json`](../examples/schema-resume.json)

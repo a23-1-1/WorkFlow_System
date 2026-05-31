@@ -11,6 +11,8 @@
 
 ## 推荐工作流架构
 
+> **LLM 提示词默认采用方案 A**：SYSTEM 仅 [`docs/prompt-system.txt`](docs/prompt-system.txt)；USER 全文 [`docs/prompt-user-template.txt`](docs/prompt-user-template.txt)（含 `【简历原文】` + 文档提取器变量）；LLM「上下文」留空。操作清单见 [`docs/dify-llm-setup-plan-a.md`](docs/dify-llm-setup-plan-a.md)。
+
 ```mermaid
 flowchart LR
     A[开始节点<br/>上传 PDF/DOCX/TXT] --> B[文档提取器<br/>纯文本]
@@ -36,8 +38,10 @@ flowchart LR
 2. **导入工作流思路**  
    按 [`docs/dify-workflow.md`](docs/dify-workflow.md) 逐步添加节点并绑定变量。
 
-3. **配置提示词**  
-   将 [`docs/prompt-system.txt`](docs/prompt-system.txt) 内容粘贴到 LLM 节点的「系统提示词」。
+3. **配置提示词（方案 A）**  
+   - SYSTEM：[`docs/prompt-system.txt`](docs/prompt-system.txt)  
+   - USER：[`docs/prompt-user-template.txt`](docs/prompt-user-template.txt)（上下文留空）  
+   - 详见 [`docs/dify-llm-setup-plan-a.md`](docs/dify-llm-setup-plan-a.md)
 
 4. **对齐输出结构**  
    参考 [`examples/schema-resume.json`](examples/schema-resume.json) 与 [`examples/output-sample.json`](examples/output-sample.json) 调整字段。
@@ -89,7 +93,7 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 
 ### 故障排查
 
-- **`valid=true` 但字段全为 null / 空数组**：通常是文档提取器无正文，或 LLM **用户消息**未引用 `{{#文档提取器.text#}}`。逐步排查见 [`docs/troubleshooting-empty-output.md`](docs/troubleshooting-empty-output.md)。
+- **`valid=true` 但字段全为 null / 空数组**：通常是文档提取器无正文，或 LLM **USER** 未引用 `{{#文档提取器.text#}}`（勿只挂「上下文」）。按 **方案 A** 排查：[`docs/troubleshooting-empty-output.md`](docs/troubleshooting-empty-output.md)、[`docs/dify-llm-setup-plan-a.md`](docs/dify-llm-setup-plan-a.md)。
 
 ## 仓库结构
 
@@ -98,9 +102,11 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 ├── README.md
 ├── docs/
 │   ├── dify-workflow.md
+│   ├── dify-llm-setup-plan-a.md
 │   ├── troubleshooting-empty-output.md
 │   ├── code-node-resume.py
-│   └── prompt-system.txt
+│   ├── prompt-system.txt
+│   └── prompt-user-template.txt
 ├── examples/
 │   ├── schema-resume.json
 │   └── output-sample.json

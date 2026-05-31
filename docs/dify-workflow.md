@@ -52,28 +52,42 @@
 
 ## 四、LLM 节点 — 结构化输出
 
+> **默认推荐：方案 A**（简历正文只走 USER，上下文留空）。完整操作清单见 [`dify-llm-setup-plan-a.md`](dify-llm-setup-plan-a.md)。
+
 ### 模型选择
 
 - 优先选择支持 **JSON / 结构化输出** 的模型。
 - **温度**：0 ~ 0.3，降低随意发挥。
 - **最大 Token**：按简历平均长度上调，避免截断。
 
-### 提示词
+### 方案 A：提示词与变量（推荐）
 
-- **系统提示词**：复制 [`prompt-system.txt`](prompt-system.txt) **全文**到 LLM 的 system（该文件仅含 system，不含用户消息）。
-- **用户消息**（必填）：复制 [`prompt-user-template.txt`](prompt-user-template.txt) **全文**到 USER，并确保 `【简历原文】` 下方引用了文档提取器输出（默认 `{{#文档提取器.text#}}`）。
+| 区域 | 粘贴内容 | 是否引用简历变量 |
+|------|----------|------------------|
+| **SYSTEM** | [`prompt-system.txt`](prompt-system.txt) 全文 | **否** — 不含 `{{#...#}}` |
+| **USER** | [`prompt-user-template.txt`](prompt-user-template.txt) 全文 | **是** — `【简历原文】` 下引用提取器 |
+| **上下文（Context）** | **留空，不添加任何变量** | **否** — 避免橙字「要启用上下文功能…」警告 |
 
-变量名与画布一致时修改占位符即可：
+**界面操作（截图式步骤）：**
 
-| 场景 | 占位符示例 |
-|------|------------|
+1. 打开 LLM 节点 → 找到 **SYSTEM / 系统提示词** 输入框 → 粘贴 [`prompt-system.txt`](prompt-system.txt) 全文 → 保存。
+2. 切换到 **USER / 用户消息** 输入框 → 粘贴 [`prompt-user-template.txt`](prompt-user-template.txt) 全文（含顶部 3 行配置说明可保留或删除）→ 确认 `【简历原文】` 下一行是 `{{#文档提取器.text#}}`（或与你画布一致的占位符）。
+3. 展开 **上下文（Context）** 面板 → **不要** 点击「添加变量」或拖入文档提取器输出 → 保持为空。
+4. Studio 运行一次 → **追踪（Trace）** → 展开 LLM → 在 USER 消息中找到 `【简历原文】` → 其下方应为**真实中文段落**（非空、非未替换的 `{{#...#}}`）。
+
+变量名与画布一致时，仅改 USER 模板中的占位符：
+
+| 场景 | USER 中占位符示例 |
+|------|-------------------|
 | 提取器输出 `text`（默认） | `{{#文档提取器.text#}}` |
 | 自定义 `extracted_text` | `{{#文档提取器.extracted_text#}}` |
 | 仅文本输入 `resume_text` | `{{#开始.resume_text#}}` |
 
-> **常见故障**：只配置了 system + 结构化输出 Schema，但 **用户消息为空或未引用 `text`** → LLM 收不到简历正文，会输出全 `null` / 空数组，代码节点仍可能 `valid=true`。若 Trace 显示 USER **已有正文**仍全空，请换用最新 `prompt-system.txt` / `prompt-user-template.txt`，或暂时关闭「仅结构化输出」、降低温度后重试。排查见 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md)。
+> **为何不挂上下文？** 若只在 LLM「上下文」里引用 `text` 而 USER 为空，Dify 可能提示橙字「要启用上下文功能…」，且 Trace 中 USER 无正文时模型仍可能输出全 `null`。方案 A 把简历**唯一**放进 USER，与 [`prompt-system.txt`](prompt-system.txt) 的「输入前提」一致。
 
-> 变量引用语法以 Dify 当前版本为准，常见为 `{{#节点名.变量名#}}`。运行后在 Trace 中确认 USER 消息里占位符已被**真实正文**替换。开启 JSON Schema 时模型仍须阅读 USER 全文，不可用全 null 通过校验。
+> **常见故障**：只配置了 system + 结构化输出 Schema，但 **USER 为空或未引用 `text`** → LLM 收不到简历正文，会输出全 `null` / 空数组，代码节点仍可能 `valid=true`。若 Trace 显示 USER **已有正文**仍全空，请换用最新 `prompt-system.txt` / `prompt-user-template.txt`，或暂时关闭「仅结构化输出」、降低温度后重试。排查见 [`troubleshooting-empty-output.md`](troubleshooting-empty-output.md)。
+
+> 变量引用语法以 Dify 当前版本为准，常见为 `{{#节点名.变量名#}}`。Trace 自检：**`【简历原文】` 下方必须是真实正文**。开启 JSON Schema 时模型仍须阅读 USER 全文，不可用全 null 通过校验。
 
 ### 输出
 
@@ -227,8 +241,9 @@ DIFY_BASE_URL=https://api.dify.ai/v1
 
 | 文件 | 用途 |
 |------|------|
-| `prompt-system.txt` | LLM **系统** 提示词（全文粘贴到 system） |
-| `prompt-user-template.txt` | LLM **用户消息**模板（全文粘贴到 USER） |
+| `prompt-system.txt` | LLM **系统** 提示词（全文粘贴到 SYSTEM，不含简历变量） |
+| `prompt-user-template.txt` | LLM **用户消息**模板（全文粘贴到 USER，含 `【简历原文】`） |
+| `dify-llm-setup-plan-a.md` | 方案 A 三步操作清单 |
 | `troubleshooting-empty-output.md` | 全 null / 空数组排查（docx、变量引用、Trace） |
 | `code-node-resume.py` | 云端 Python3 代码节点全文（复制粘贴） |
 | `../examples/schema-resume.json` | 字段说明与类型约定 |
