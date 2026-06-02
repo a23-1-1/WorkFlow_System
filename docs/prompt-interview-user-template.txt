@@ -1,0 +1,19 @@
+【仅粘贴到 USER / 用户消息】
+请根据以下输入生成面试题，并按系统提示仅输出 JSON。
+
+要求：
+1. 技术题优先覆盖 JD 的 required_skills。
+2. 项目题优先覆盖候选人 `work_experience` 与 `projects`（若有）。
+3. 风险追问题优先围绕 `risk_points` 和 `missing_points`。
+4. 仅输出单个 JSON 对象。
+
+【匹配结果 JSON】
+{{#代码_匹配归一化.result#}}
+
+【候选人简历 JSON】
+{{#代码_简历校验.result#}}
+
+【岗位 JD JSON】
+{{#代码_JD校验.result#}}
+
+（变量说明：节点名需替换为你画布中的实际节点名称。）

@@ -1,0 +1,26 @@
+{
+  "candidate_name": "张某某",
+  "job_title": "数据开发工程师",
+  "match_score": 82,
+  "recommendation": "recommend",
+  "matched_points": [
+    "具备 Spark、Hive、Kafka 等核心技能",
+    "有数据库维护与 SQL 优化实践",
+    "参与过演示数仓项目，理解离线链路"
+  ],
+  "missing_points": [
+    "缺少 Flink 相关实时计算项目细节",
+    "缺少 Airflow 或调度平台实践描述"
+  ],
+  "risk_points": [
+    "部分项目为学习型项目，生产环境规模需面试核验",
+    "简历中实时链路监控与容错方案描述较少"
+  ],
+  "interview_focus": [
+    "追问数仓分层与主题域设计思路",
+    "追问 Kafka 到 Hive 的数据一致性处理",
+    "追问 SQL 优化前后指标与方法",
+    "追问实时任务容错和告警治理经验"
+  ],
+  "reason_summary": "候选人与岗位整体匹配度较高，核心技能覆盖较好，建议进入一面并重点核验项目深度与实时链路实战能力。"
+}

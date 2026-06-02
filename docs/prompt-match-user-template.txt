@@ -1,0 +1,16 @@
+【仅粘贴到 USER / 用户消息】
+请基于以下简历与岗位信息进行匹配评分，按系统提示仅输出 JSON。
+
+要求：
+1. 不要编造；只基于输入 JSON。
+2. `match_score` 为 0-100 整数。
+3. `recommendation` 必须使用枚举：strong_recommend / recommend / hold / reject。
+4. 仅输出单个 JSON 对象。
+
+【候选人简历 JSON】
+{{#代码_简历校验.result#}}
+
+【岗位 JD JSON】
+{{#代码_JD校验.result#}}
+
+（变量说明：请将以上节点名替换为你的画布实际节点名。）

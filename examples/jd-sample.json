@@ -1,0 +1,35 @@
+{
+  "job_title": "数据开发工程师",
+  "job_type": "数据开发",
+  "seniority": "校招/初级",
+  "required_experience": "应届可投，1 年内相关实习经验优先",
+  "education_requirement": "本科及以上，计算机或相关专业",
+  "required_skills": [
+    "SQL",
+    "Python",
+    "Hive",
+    "Spark",
+    "Kafka",
+    "Hadoop"
+  ],
+  "preferred_skills": [
+    "Flink",
+    "Airflow",
+    "Docker",
+    "数据建模"
+  ],
+  "responsibilities": [
+    "参与离线与实时数据链路建设",
+    "负责数仓分层建模与主题域开发",
+    "优化 SQL 查询性能并保障任务稳定性",
+    "与产品和分析团队协作交付数据服务"
+  ],
+  "keywords": [
+    "数据开发",
+    "数仓",
+    "ETL",
+    "离线计算",
+    "实时计算",
+    "性能优化"
+  ]
+}

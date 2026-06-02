@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/jd-extract.json",
+  "title": "JDExtractResult",
+  "description": "岗位 JD 结构化输出（学习用）",
+  "type": "object",
+  "required": [
+    "job_title",
+    "job_type",
+    "seniority",
+    "required_experience",
+    "education_requirement",
+    "required_skills",
+    "preferred_skills",
+    "responsibilities",
+    "keywords"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "error": {
+      "type": ["string", "null"],
+      "description": "异常信息；正常时可为空或省略"
+    },
+    "job_title": { "type": ["string", "null"] },
+    "job_type": { "type": ["string", "null"] },
+    "seniority": { "type": ["string", "null"] },
+    "required_experience": { "type": ["string", "null"] },
+    "education_requirement": { "type": ["string", "null"] },
+    "required_skills": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "preferred_skills": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "responsibilities": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

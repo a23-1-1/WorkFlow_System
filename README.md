@@ -79,6 +79,24 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 
 面向最终用户的中文展示（非 snake_case 键名）见 [`docs/display-chinese-labels.md`](docs/display-chinese-labels.md)，标签映射见 [`examples/labels-zh.json`](examples/labels-zh.json)。
 
+## 二期：AI 招聘初筛与面试助手
+
+在一期简历提取器基础上，二期新增「岗位 JD 提取 + 匹配评分 + 面试题生成 + 中文报告」能力，用于招聘初筛场景的自动化评估。
+
+- 执行计划（Day 1 ~ Day 7）：[`docs/recruitment-screening-7day-plan.md`](docs/recruitment-screening-7day-plan.md)
+- 工作流总览：[`docs/recruitment-screening-workflow.md`](docs/recruitment-screening-workflow.md)
+- Day 1 快速入口：先配置 [`docs/prompt-jd-extraction.txt`](docs/prompt-jd-extraction.txt) + [`docs/prompt-jd-user-template.txt`](docs/prompt-jd-user-template.txt)
+
+```mermaid
+flowchart LR
+    resumeInput[简历输入] --> resumeJson[简历结构化]
+    jdInput[JD输入] --> jdJson[JD结构化]
+    resumeJson --> matchScore[匹配评分]
+    jdJson --> matchScore
+    matchScore --> interviewGen[面试题生成]
+    interviewGen --> zhReport[中文报告]
+```
+
 ## 注意事项
 
 ### 隐私与合规
@@ -111,15 +129,30 @@ curl -X POST "YOUR_BASE_URL/v1/workflows/run" \
 │   ├── dify-workflow.md
 │   ├── dify-llm-setup-plan-a.md
 │   ├── troubleshooting-empty-output.md
+│   ├── recruitment-screening-7day-plan.md
+│   ├── recruitment-screening-workflow.md
 │   ├── code-node-resume.py
 │   ├── code-node-display-zh.py
+│   ├── code-node-jd-parse.py
+│   ├── code-node-match-normalize.py
 │   ├── display-chinese-labels.md
 │   ├── prompt-system.txt
-│   └── prompt-user-template.txt
+│   ├── prompt-user-template.txt
+│   ├── prompt-jd-extraction.txt
+│   ├── prompt-jd-user-template.txt
+│   ├── prompt-match-score.txt
+│   ├── prompt-match-user-template.txt
+│   ├── prompt-interview-questions.txt
+│   └── prompt-interview-user-template.txt
 ├── examples/
 │   ├── schema-resume.json
+│   ├── schema-jd.json
+│   ├── schema-match-result.json
+│   ├── schema-interview-questions.json
 │   ├── labels-zh.json
-│   └── output-sample.json
+│   ├── output-sample.json
+│   ├── jd-sample.json
+│   └── match-result-sample.json
 └── .gitignore
 ```
 

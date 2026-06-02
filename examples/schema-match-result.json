@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/match-result.json",
+  "title": "ResumeJDMatchResult",
+  "description": "候选人与岗位匹配结果输出（学习用）",
+  "type": "object",
+  "required": [
+    "candidate_name",
+    "job_title",
+    "match_score",
+    "recommendation",
+    "matched_points",
+    "missing_points",
+    "risk_points",
+    "interview_focus",
+    "reason_summary"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "error": {
+      "type": ["string", "null"]
+    },
+    "candidate_name": {
+      "type": ["string", "null"]
+    },
+    "job_title": {
+      "type": ["string", "null"]
+    },
+    "match_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": ["strong_recommend", "recommend", "hold", "reject"]
+    },
+    "matched_points": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "missing_points": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "risk_points": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "interview_focus": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "reason_summary": {
+      "type": ["string", "null"]
+    }
+  }
+}

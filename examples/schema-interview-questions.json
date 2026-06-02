@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/interview-questions.json",
+  "title": "InterviewQuestionsResult",
+  "description": "面试题生成结果（学习用）",
+  "type": "object",
+  "required": [
+    "technical_questions",
+    "project_questions",
+    "behavior_questions",
+    "risk_followup_questions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "error": {
+      "type": ["string", "null"]
+    },
+    "technical_questions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "project_questions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "behavior_questions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "risk_followup_questions": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
